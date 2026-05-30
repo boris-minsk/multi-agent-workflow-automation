@@ -1,0 +1,102 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-000000000001",
+    "companyName": "Northwind Logistics",
+    "contactName": "Megan Wallace",
+    "contactEmail": "megan.wallace@northwind-logistics.example",
+    "website": "https://northwind-logistics.example",
+    "industry": "Logistics & Freight",
+    "crmNotes": "Downloaded ROI whitepaper twice. Replied to nurture email asking about pricing tiers and an enterprise demo. Wants to compare against incumbent vendor before end of quarter.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000002",
+    "companyName": "Helix Bio Labs",
+    "contactName": "Dr. Arjun Patel",
+    "contactEmail": "a.patel@helixbio.example",
+    "website": "https://helixbio.example",
+    "industry": "Biotech / Life Sciences",
+    "crmNotes": "Met at conference last week. Mentioned they're rebuilding their lab-data pipeline in Q3. Asked for a follow-up email and a technical deep-dive.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000003",
+    "companyName": "Crestwood Capital",
+    "contactName": "Sarah Lin",
+    "contactEmail": "sarah.lin@crestwood-capital.example",
+    "website": "https://crestwood-capital.example",
+    "industry": "Financial Services",
+    "crmNotes": "Compliance officer requested a security questionnaire and SOC 2 report. Multiple stakeholders on the last call.",
+    "stage": "Contacted"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000004",
+    "companyName": "Sunrise Bakery Co-op",
+    "contactName": "Tom Reyes",
+    "contactEmail": "tom@sunrise-bakery.example",
+    "website": "https://sunrise-bakery.example",
+    "industry": "Food & Beverage",
+    "crmNotes": "Signed up for newsletter. No engagement since. Tiny shop, three locations.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000005",
+    "companyName": "Quanta Robotics",
+    "contactName": "Yuki Tanaka",
+    "contactEmail": "yuki.tanaka@quanta-robotics.example",
+    "website": "https://quanta-robotics.example",
+    "industry": "Industrial Automation",
+    "crmNotes": "VP of Operations booked a demo for next Tuesday. Procurement said budget is approved if technical fit is confirmed. Timeline: pilot rollout in 6 weeks.",
+    "stage": "Qualified"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000006",
+    "companyName": "Pinecrest Schools District",
+    "contactName": "Linda Okafor",
+    "contactEmail": "lokafor@pinecrest-schools.example",
+    "website": "https://pinecrest-schools.example",
+    "industry": "Education (K-12 Public)",
+    "crmNotes": "Asked whether we have an education discount. Budget is small and depends on grant approval, which won't land until next fiscal year.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000007",
+    "companyName": "Aurora Energy Systems",
+    "contactName": "Marcus Hale",
+    "contactEmail": "marcus.hale@aurora-energy.example",
+    "website": "https://aurora-energy.example",
+    "industry": "Renewable Energy",
+    "crmNotes": "Reached out via partner channel. Looking to consolidate three legacy vendors into one platform. CTO is the champion. Budget cycle aligns with end of fiscal year.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000008",
+    "companyName": "Kettleworth Apparel",
+    "contactName": "Priya Shankar",
+    "contactEmail": "priya.s@kettleworth.example",
+    "website": "https://kettleworth.example",
+    "industry": "Apparel & Retail",
+    "crmNotes": "Browsed pricing page once. No email engagement. Free-tier user for 3 months with one seat.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000009",
+    "companyName": "MeridianCare Health",
+    "contactName": "Dr. Elena Vasquez",
+    "contactEmail": "evasquez@meridiancare.example",
+    "website": "https://meridiancare.example",
+    "industry": "Healthcare Provider",
+    "crmNotes": "Chief Medical Information Officer attended the webinar. Asked very specific HIPAA / BAA questions. Mentioned a current vendor RFP closes in 30 days.",
+    "stage": "New"
+  },
+  {
+    "id": "11111111-1111-1111-1111-000000000010",
+    "companyName": "BlueRiver Outfitters",
+    "contactName": "Jacob Nilsson",
+    "contactEmail": "jacob@blueriver-outfitters.example",
+    "website": "https://blueriver-outfitters.example",
+    "industry": "E-commerce / Outdoor Retail",
+    "crmNotes": "Submitted contact form: 'We're switching off our current platform next quarter, want to talk asap.' Includes a phone number.",
+    "stage": "New"
+  }
+]

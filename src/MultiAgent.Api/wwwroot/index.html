@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiAgent — Sales Ops Assistant</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>
+      MultiAgent <span class="muted">— Sales Ops Assistant</span>
+    </h1>
+    <div class="header-right">
+      <span id="provider-badge" class="badge">…</span>
+      <a class="link" href="/openapi/v1.json" target="_blank">OpenAPI</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="leads-panel">
+      <h2>Leads <span class="muted">(<span id="lead-count">0</span>)</span></h2>
+      <div id="leads-list" class="scroll"></div>
+    </section>
+
+    <section class="panel" id="runs-panel">
+      <h2>
+        Workflow runs
+        <span class="muted">(latest <span id="run-count">0</span>)</span>
+        <button id="refresh-runs" class="ghost">refresh</button>
+      </h2>
+      <div id="runs-list" class="scroll"></div>
+    </section>
+
+    <section class="panel" id="side-panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="outbox">Outbox</button>
+        <button class="tab" data-tab="notifications">Notifications</button>
+      </div>
+      <div class="tab-content" id="outbox-tab">
+        <div id="outbox-list" class="scroll"></div>
+      </div>
+      <div class="tab-content hidden" id="notifications-tab">
+        <div id="notifications-list" class="scroll"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MultiAgent.Agents/MultiAgent.Agents.csproj" />
+    <Project Path="src/MultiAgent.Api/MultiAgent.Api.csproj" />
+    <Project Path="src/MultiAgent.Core/MultiAgent.Core.csproj" />
+    <Project Path="src/MultiAgent.Infrastructure/MultiAgent.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MultiAgent.Tests/MultiAgent.Tests.csproj" />
+  </Folder>
+</Solution>

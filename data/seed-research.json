@@ -1,0 +1,124 @@
+[
+  {
+    "website": "https://northwind-logistics.example",
+    "companyDescription": "Mid-size freight broker (~800 employees) connecting shippers and carriers across North America. Public via SPAC in 2023.",
+    "knownPainPoints": [
+      "Margin compression from spot-market rate volatility",
+      "Manual carrier-onboarding bottlenecks the sales team",
+      "Two legacy TMS platforms still in use side-by-side post-acquisition"
+    ],
+    "recentNews": [
+      "Q1 earnings call mentioned tech consolidation as a top priority",
+      "Hired new VP of Revenue Operations from a competitor"
+    ]
+  },
+  {
+    "website": "https://helixbio.example",
+    "companyDescription": "Series B biotech specializing in single-cell sequencing workflows. ~120 employees, lab in Cambridge MA.",
+    "knownPainPoints": [
+      "Wet-lab and dry-lab data live in disconnected systems",
+      "Slow turnaround on analysis pipelines blocks experiment velocity",
+      "Compliance burden growing as they prep for clinical work"
+    ],
+    "recentNews": [
+      "$60M Series B led by Foresight Ventures",
+      "Just announced partnership with a major academic medical center"
+    ]
+  },
+  {
+    "website": "https://crestwood-capital.example",
+    "companyDescription": "Boutique private-equity firm, ~50 employees, AUM ~$2B. Focus on mid-market industrials.",
+    "knownPainPoints": [
+      "Heavy regulatory reporting overhead consumes ops bandwidth",
+      "Portfolio-company performance data is fragmented across spreadsheets",
+      "Security posture must satisfy LP due-diligence reviews"
+    ],
+    "recentNews": [
+      "Closing Fund IV at $1.2B target",
+      "Hired their first Chief Compliance Officer last quarter"
+    ]
+  },
+  {
+    "website": "https://sunrise-bakery.example",
+    "companyDescription": "Local artisan bakery co-op with three retail locations and a small wholesale operation.",
+    "knownPainPoints": [
+      "Owner-operators wear too many hats",
+      "Manual ingredient ordering occasionally causes stockouts"
+    ],
+    "recentNews": [
+      "Featured in a regional 'best of' food guide"
+    ]
+  },
+  {
+    "website": "https://quanta-robotics.example",
+    "companyDescription": "Industrial robotics integrator. Late-stage startup (~200 employees) deploying robotic cells into auto-tier-1 suppliers.",
+    "knownPainPoints": [
+      "Project-tracking visibility across deployments is poor",
+      "Service technicians need offline-capable mobile tooling",
+      "Pre-sales engineering effort doesn't scale with pipeline growth"
+    ],
+    "recentNews": [
+      "Signed a multi-year master agreement with a major OEM",
+      "Recently completed SOC 2 Type II audit"
+    ]
+  },
+  {
+    "website": "https://pinecrest-schools.example",
+    "companyDescription": "Public K-12 school district serving ~14,000 students across 22 schools.",
+    "knownPainPoints": [
+      "Tight, grant-dependent budgets",
+      "Long procurement cycles that span board approvals"
+    ],
+    "recentNews": [
+      "Federal Title I funding renewal pending"
+    ]
+  },
+  {
+    "website": "https://aurora-energy.example",
+    "companyDescription": "Renewable-energy developer focused on commercial solar + battery storage. ~400 employees, US-wide.",
+    "knownPainPoints": [
+      "Three legacy systems for asset tracking, finance, and field service must be reconciled monthly",
+      "Inconsistent project handoffs between dev, EPC, and asset-management teams",
+      "Pressure to support tax-credit reporting under the latest IRA rules"
+    ],
+    "recentNews": [
+      "Announced a 500MW pipeline expansion",
+      "Hired a new CTO from a major utility 6 months ago"
+    ]
+  },
+  {
+    "website": "https://kettleworth.example",
+    "companyDescription": "Direct-to-consumer apparel brand. Small team, single Shopify storefront.",
+    "knownPainPoints": [
+      "Limited budget for new tooling",
+      "One-person ops team"
+    ],
+    "recentNews": []
+  },
+  {
+    "website": "https://meridiancare.example",
+    "companyDescription": "Regional multi-specialty healthcare provider operating 18 outpatient clinics across two states.",
+    "knownPainPoints": [
+      "Documentation burden contributes to clinician burnout",
+      "Patient-data interoperability across clinic groups is uneven",
+      "Strict HIPAA and state-level compliance requirements"
+    ],
+    "recentNews": [
+      "Issued an RFP for a new clinical workflow platform",
+      "Recently joined a regional health information exchange"
+    ]
+  },
+  {
+    "website": "https://blueriver-outfitters.example",
+    "companyDescription": "Outdoor-gear e-commerce retailer with a growing private-label line. ~80 employees, single fulfillment center.",
+    "knownPainPoints": [
+      "Current e-commerce platform doesn't scale during seasonal peaks",
+      "Inventory forecasting is mostly manual",
+      "Customer-service team drowns in repetitive order-status questions"
+    ],
+    "recentNews": [
+      "Hit profitability for the first time last fiscal year",
+      "Planning to launch a B2B wholesale channel in 6 months"
+    ]
+  }
+]

@@ -1,0 +1,44 @@
+# Build outputs
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime artifacts (created by the app)
+outbox/
+notes/
+logs/
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Environment & secrets
+appsettings.Development.json
+appsettings.Local.json
+.env
+*.user-secrets
+
+# Docs & AI assistant config (not tracked)
+docs/
+changelog.md
+CLAUDE.md
+
+# Claude Code (local)
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+coverage/
+*.trx
+*.coverage

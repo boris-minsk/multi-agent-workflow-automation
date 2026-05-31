@@ -50,13 +50,13 @@ public sealed class SalesFollowUpWorkflow(
                     "Lead {LeadId} scored {Score}/10 < threshold {Threshold}; skipping outreach.",
                     leadId, score.Score, _options.QualificationThreshold);
 
-                var skipInstructions = await crmUpdater.InvokeAsync(
-                    lead, score, research: null, draft: null, emailSent: false, runId, ct);
+                var skipResult = await crmUpdater.InvokeAsync(
+                    lead, score, research: null, draft: null, emailSent: false, runId, crm, ct);
 
-                await ApplyCrmInstructionsAsync(lead.Id, skipInstructions, ct);
+                await ApplyCrmInstructionsAsync(lead.Id, skipResult, ct);
 
                 await notifications.PostAsync(runId, NotificationSeverity.Info,
-                    $"Lead '{lead.CompanyName}' marked {skipInstructions.TargetStage} (score {score.Score}/10).", ct);
+                    $"Lead '{lead.CompanyName}' marked {skipResult.Instructions.TargetStage} (score {score.Score}/10).", ct);
 
                 await runStore.SetStatusAsync(runId, RunStatus.Skipped,
                     errorMessage: null, finalScoreJson: scoreJson, finalDraftJson: null, ct);
@@ -76,10 +76,12 @@ public sealed class SalesFollowUpWorkflow(
             var outboxItem = await emailSender.SendAsync(
                 runId, lead.Id, lead.ContactEmail, draft.Subject, draft.Body, ct);
 
-            // 5. CRM update — agent decides structured instructions, workflow applies them
-            var crmInstructions = await crmUpdater.InvokeAsync(
-                lead, score, research, draft, emailSent: true, runId, ct);
-            await ApplyCrmInstructionsAsync(lead.Id, crmInstructions, ct);
+            // 5. CRM update — in tool mode (OpenAI) the agent calls the CRM tools directly;
+            // otherwise it returns structured instructions the workflow applies.
+            // ApplyCrmInstructionsAsync skips any write a tool already did (with a fallback).
+            var crmResult = await crmUpdater.InvokeAsync(
+                lead, score, research, draft, emailSent: true, runId, crm, ct);
+            await ApplyCrmInstructionsAsync(lead.Id, crmResult, ct);
 
             await notifications.PostAsync(runId, NotificationSeverity.Info,
                 $"Lead '{lead.CompanyName}' contacted (score {score.Score}/10). Subject: \"{draft.Subject}\". " +
@@ -105,10 +107,18 @@ public sealed class SalesFollowUpWorkflow(
         }
     }
 
-    private async Task ApplyCrmInstructionsAsync(Guid leadId, CrmUpdateInstructions instructions, CancellationToken ct)
+    private async Task ApplyCrmInstructionsAsync(Guid leadId, CrmUpdateResult result, CancellationToken ct)
     {
-        await crm.UpdateStageAsync(leadId, instructions.TargetStage, ct);
-        if (!string.IsNullOrWhiteSpace(instructions.ShortNote))
+        var instructions = result.Instructions;
+
+        // In tool mode the agent already performed the stage/CRM-note writes via tools; apply
+        // only what a tool did NOT do (deterministic fallback). The Markdown note is never a
+        // tool, so it is always written here from the returned instructions.
+        if (!result.StageWrittenByTool)
+        {
+            await crm.UpdateStageAsync(leadId, instructions.TargetStage, ct);
+        }
+        if (!result.NoteWrittenByTool && !string.IsNullOrWhiteSpace(instructions.ShortNote))
         {
             await crm.AddNoteAsync(leadId, instructions.ShortNote, ct);
         }

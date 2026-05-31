@@ -4,6 +4,7 @@
     <Project Path="src/MultiAgent.Api/MultiAgent.Api.csproj" />
     <Project Path="src/MultiAgent.Core/MultiAgent.Core.csproj" />
     <Project Path="src/MultiAgent.Infrastructure/MultiAgent.Infrastructure.csproj" />
+    <Project Path="src/MultiAgent.Mcp/MultiAgent.Mcp.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MultiAgent.Tests/MultiAgent.Tests.csproj" />

@@ -33,18 +33,28 @@ public static class LlmServiceCollectionExtensions
                 var llm = sp.GetRequiredService<IOptions<LlmOptions>>().Value;
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
-                if (string.IsNullOrWhiteSpace(openAi.ApiKey))
+                // Accept either OpenAI:ApiKey (env: OpenAI__ApiKey) or the OpenAI SDK's standard
+                // OPENAI_API_KEY env var, so a key set the conventional way just works.
+                var apiKey = !string.IsNullOrWhiteSpace(openAi.ApiKey)
+                    ? openAi.ApiKey
+                    : Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+
+                if (string.IsNullOrWhiteSpace(apiKey))
                 {
                     throw new InvalidOperationException(
-                        "Llm:Provider is 'OpenAI' but OpenAI:ApiKey is not configured. " +
-                        "Set the OpenAI__ApiKey environment variable or fall back to Llm:Provider=Mock.");
+                        "Llm:Provider is 'OpenAI' but no API key is configured. Set OpenAI__ApiKey " +
+                        "(config) or the standard OPENAI_API_KEY environment variable, or use Llm:Provider=Mock.");
                 }
 
-                var underlying = new OpenAIClient(openAi.ApiKey)
+                var underlying = new OpenAIClient(apiKey)
                     .GetChatClient(llm.Model)
                     .AsIChatClient();
 
+                // UseFunctionInvocation is outermost so it can intercept tool calls and loop
+                // (re-invoking the inner client). It's a no-op for tool-less requests, so the
+                // qualifier/research/outreach agents are unaffected; only CrmUpdate ships tools.
                 return new ChatClientBuilder(underlying)
+                    .UseFunctionInvocation(loggerFactory)
                     .UseLogging(loggerFactory)
                     .Build();
             });

@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "multiagent-crm": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["run", "--project", "src/MultiAgent.Mcp"]
+    }
+  }
+}

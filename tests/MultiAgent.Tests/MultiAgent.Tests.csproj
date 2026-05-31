@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\MultiAgent.Core\MultiAgent.Core.csproj" />
     <ProjectReference Include="..\..\src\MultiAgent.Agents\MultiAgent.Agents.csproj" />
     <ProjectReference Include="..\..\src\MultiAgent.Infrastructure\MultiAgent.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\MultiAgent.Mcp\MultiAgent.Mcp.csproj" />
   </ItemGroup>
 
 </Project>

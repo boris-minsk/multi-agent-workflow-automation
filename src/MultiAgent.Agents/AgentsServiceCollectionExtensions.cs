@@ -15,6 +15,12 @@ public static class AgentsServiceCollectionExtensions
     {
         services.Configure<WorkflowOptions>(configuration.GetSection(WorkflowOptions.SectionName));
 
+        // CRM tool-calling is OpenAI-only (the mock cannot call tools). Gate on the raw config
+        // string so MultiAgent.Agents stays free of the Infrastructure LlmOptions type.
+        var crmToolsEnabled = string.Equals(
+            configuration["Llm:Provider"], "OpenAI", StringComparison.OrdinalIgnoreCase);
+        services.AddSingleton(new CrmToolPolicy(crmToolsEnabled));
+
         // Runner: inner runner + tracing/retry decorator. Both must see the same DI scope-less
         // dependencies; both are safe as singletons.
         services.AddSingleton<AgentRunner>();

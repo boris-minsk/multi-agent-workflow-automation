@@ -1,8 +1,11 @@
+using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using MultiAgent.Core.Abstractions;
+using MultiAgent.Infrastructure.Crm;
 using MultiAgent.Infrastructure.Email;
 using MultiAgent.Infrastructure.Notes;
 using MultiAgent.Infrastructure.Notifications;
@@ -51,7 +54,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite($"Data Source={paths.SqliteDb}"));
 
-        services.AddScoped<ICrmRepository, SqliteCrmRepository>();
+        AddCrmRepository(services, configuration);
         services.AddScoped<ICompanyResearchSource, SqliteCompanyResearchSource>();
         services.AddScoped<IEmailSender, FileSystemEmailSender>();
         services.AddScoped<IWorkflowRunStore, SqliteWorkflowRunStore>();
@@ -66,6 +69,44 @@ public static class InfrastructureServiceCollectionExtensions
         }
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="ICrmRepository"/> based on <c>Crm:Provider</c>. Default <c>Sqlite</c>
+    /// uses the in-memory/SQLite mock; <c>HubSpot</c> registers a typed <see cref="HttpClient"/>
+    /// (with the bearer token + standard resilience) backing <see cref="HubSpotCrmRepository"/>.
+    /// </summary>
+    private static void AddCrmRepository(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<CrmOptions>(configuration.GetSection(CrmOptions.SectionName));
+        services.Configure<HubSpotOptions>(configuration.GetSection(HubSpotOptions.SectionName));
+
+        var crmOptions = configuration.GetSection(CrmOptions.SectionName).Get<CrmOptions>() ?? new CrmOptions();
+        if (crmOptions.Provider != CrmProvider.HubSpot)
+        {
+            services.AddScoped<ICrmRepository, SqliteCrmRepository>();
+            return;
+        }
+
+        var hubSpot = configuration.GetSection(HubSpotOptions.SectionName).Get<HubSpotOptions>() ?? new HubSpotOptions();
+        if (string.IsNullOrWhiteSpace(hubSpot.AccessToken))
+        {
+            throw new InvalidOperationException(
+                "Crm:Provider is 'HubSpot' but HubSpot:AccessToken is not configured. " +
+                "Set the HubSpot__AccessToken environment variable (or user-secrets), or use Crm:Provider=Sqlite.");
+        }
+
+        services.AddSingleton<HubSpotProvisioningState>();
+        services.AddHttpClient<HubSpotCrmRepository>(client =>
+            {
+                client.BaseAddress = new Uri(hubSpot.BaseUrl);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", hubSpot.AccessToken);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            })
+            // Retry GETs on transient errors; skip retrying PATCH/POST so we never duplicate a note.
+            .AddStandardResilienceHandler(o => o.Retry.DisableForUnsafeHttpMethods());
+
+        services.AddScoped<ICrmRepository>(sp => sp.GetRequiredService<HubSpotCrmRepository>());
     }
 
     private static void EnsureDirectoryExistsForFile(string path)

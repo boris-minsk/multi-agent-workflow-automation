@@ -1,0 +1,72 @@
+# Sales Ops Assistant — n8n scheduler (+ optional containerized API).
+#
+# Default topology (dev):  n8n in Docker, API on the HOST (dotnet run).
+#   n8n reaches the host API via host.docker.internal — see API_BASE_URL below.
+#   The host API MUST listen on all interfaces, not just loopback:
+#     PowerShell>  $env:ASPNETCORE_URLS="http://+:5032"; dotnet run --project src/MultiAgent.Api
+#
+# Full topology (prod-shaped): API also containerized, reached by service name.
+#     PowerShell>  $env:API_BASE_URL="http://api:8080"; docker compose --profile full up -d --build
+#
+# See docs/n8n/README.md for the full walkthrough.
+
+name: multiagent
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest   # pin a specific version for production
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=${TZ:-UTC}
+      - TZ=${TZ:-UTC}
+      # Allow editor login over plain http://localhost (no HTTPS in local dev).
+      - N8N_SECURE_COOKIE=false
+      # Allow {{ $env.* }} access inside node expressions (used for API_BASE_URL).
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Use task runners (n8n's recommended execution mode).
+      - N8N_RUNNERS_ENABLED=true
+      # Base URL the workflow's HTTP nodes call. Dev default = host-run API.
+      # For the "full" profile, override to http://api:8080 (see .env.example).
+      - API_BASE_URL=${API_BASE_URL:-http://host.docker.internal:5032}
+    volumes:
+      - n8n-data:/home/node/.n8n
+      # Exported workflow JSON, available inside the container for CLI import.
+      - ./docs/n8n:/workflows:ro
+    extra_hosts:
+      # Required on Linux so host.docker.internal resolves; harmless on Docker Desktop.
+      - "host.docker.internal:host-gateway"
+
+  # --- Optional: run the API in a container too (prod-shaped topology). ---
+  # Activated only with the "full" profile:  docker compose --profile full up
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: src/MultiAgent.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      # Writable runtime state goes to the mounted volume; read-only seed JSONs
+      # stay baked into the image at /app/data (so the volume can't shadow them).
+      - Paths__SqliteDb=/app/runtime/multiagent.db
+      - Paths__OutboxDirectory=/app/runtime/outbox
+      - Paths__NotesDirectory=/app/runtime/notes
+      # Defaults are Mock LLM + Sqlite CRM (no credentials needed). To use real
+      # providers, uncomment and supply secrets via .env:
+      # - Llm__Provider=OpenAI
+      # - OpenAI__ApiKey=${OPENAI_API_KEY}
+      # - Crm__Provider=HubSpot
+      # - HubSpot__AccessToken=${HUBSPOT_ACCESS_TOKEN}
+    volumes:
+      - multiagent-runtime:/app/runtime
+    ports:
+      # Demo convenience so you can open the dashboard at http://localhost:8080.
+      # In real production, drop this and reach `api` only over the internal network.
+      - "8080:8080"
+
+volumes:
+  n8n-data:
+  multiagent-runtime:

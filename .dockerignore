@@ -1,0 +1,23 @@
+# Keep the build context small and prevent host (Windows) build artifacts from
+# leaking into the Linux image.
+**/bin/
+**/obj/
+**/out/
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+.claude/
+docs/
+tests/
+*.user
+*.suo
+.env
+**/*.db
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+TestResults/
+coverage/
+*.trx

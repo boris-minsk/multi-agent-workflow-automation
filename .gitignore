@@ -25,8 +25,9 @@ appsettings.Local.json
 .env
 *.user-secrets
 
-# Docs & AI assistant config (not tracked)
-docs/
+# Docs & AI assistant config (not tracked) — except shippable n8n assets (docs/n8n/)
+docs/*
+!docs/n8n/
 changelog.md
 CLAUDE.md
 

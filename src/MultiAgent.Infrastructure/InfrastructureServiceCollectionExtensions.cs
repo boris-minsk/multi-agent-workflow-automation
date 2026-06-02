@@ -56,7 +56,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         AddCrmRepository(services, configuration);
         services.AddScoped<ICompanyResearchSource, SqliteCompanyResearchSource>();
-        services.AddScoped<IEmailSender, FileSystemEmailSender>();
+        AddEmailSender(services, configuration);
         services.AddScoped<IWorkflowRunStore, SqliteWorkflowRunStore>();
         services.AddSingleton<IAgentTracer, SqliteAgentTracer>();
         services.AddSingleton<INotificationSink, ConsoleNotificationSink>();
@@ -107,6 +107,35 @@ public static class InfrastructureServiceCollectionExtensions
             .AddStandardResilienceHandler(o => o.Retry.DisableForUnsafeHttpMethods());
 
         services.AddScoped<ICrmRepository>(sp => sp.GetRequiredService<HubSpotCrmRepository>());
+    }
+
+    /// <summary>
+    /// Registers <see cref="IEmailSender"/> based on <c>Email:Provider</c>. Default <c>File</c>
+    /// writes <c>.eml</c> files to the outbox (no network); <c>Smtp</c> registers the MailKit-backed
+    /// <see cref="SmtpEmailSender"/> (Gmail-ready defaults) and requires <c>Smtp:Username</c>/<c>Smtp:Password</c>.
+    /// </summary>
+    private static void AddEmailSender(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+
+        var emailOptions = configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>() ?? new EmailOptions();
+        if (emailOptions.Provider != EmailProvider.Smtp)
+        {
+            services.AddScoped<IEmailSender, FileSystemEmailSender>();
+            return;
+        }
+
+        var smtp = configuration.GetSection(SmtpOptions.SectionName).Get<SmtpOptions>() ?? new SmtpOptions();
+        if (string.IsNullOrWhiteSpace(smtp.Username) || string.IsNullOrWhiteSpace(smtp.Password))
+        {
+            throw new InvalidOperationException(
+                "Email:Provider is 'Smtp' but Smtp:Username/Smtp:Password are not configured. " +
+                "Set Smtp__Username and Smtp__Password (a Gmail App Password) via env/user-secrets, or use Email:Provider=File.");
+        }
+
+        services.AddSingleton<ISmtpDispatcher, MailKitSmtpDispatcher>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
     }
 
     private static void EnsureDirectoryExistsForFile(string path)

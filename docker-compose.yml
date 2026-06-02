@@ -54,12 +54,18 @@ services:
       - Paths__SqliteDb=/app/runtime/multiagent.db
       - Paths__OutboxDirectory=/app/runtime/outbox
       - Paths__NotesDirectory=/app/runtime/notes
-      # Defaults are Mock LLM + Sqlite CRM (no credentials needed). To use real
-      # providers, uncomment and supply secrets via .env:
+      # Defaults are Mock LLM + Sqlite CRM + File email (no credentials needed). To use
+      # real providers, uncomment and supply secrets via .env:
       # - Llm__Provider=OpenAI
       # - OpenAI__ApiKey=${OPENAI_API_KEY}
       # - Crm__Provider=HubSpot
       # - HubSpot__AccessToken=${HUBSPOT_ACCESS_TOKEN}
+      # Real SMTP sender (Gmail-ready). Smtp__Password = a Gmail App Password (needs 2FA),
+      # NOT the account login password — the login password is rejected with a 535.
+      # - Email__Provider=Smtp
+      # - Smtp__Username=${SMTP_USERNAME}
+      # - Smtp__Password=${SMTP_PASSWORD}
+      # - Smtp__FromAddress=${SMTP_USERNAME}
     volumes:
       - multiagent-runtime:/app/runtime
     ports:

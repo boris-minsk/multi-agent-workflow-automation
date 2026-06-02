@@ -84,13 +84,13 @@ data/
 
 The five "agents" each wrap a `ChatClientAgent` (Microsoft Agent Framework):
 
-| Agent | Output | What it does |
-|---|---|---|
-| `LeadQualificationAgent` | `LeadScore` | Scores 1–10, infers industry, picks Priority, gives reason |
-| `ResearchAgent` | `ResearchSummary` | Synthesizes pre-fetched company + CRM data into a brief |
-| `OutreachAgent` | `OutreachDraft` | Drafts a <150-word personalized email |
-| `CrmUpdateAgent` | `CrmUpdateInstructions` | Decides stage + structured notes; workflow executes |
-| Monitoring/Recovery | _cross-cutting_ | Polly retries, traces every attempt, alerts on terminal failure |
+| Agent                                      | Output                  | What it does                                                    |
+|---                                         |-------------------------|-----------------------------------------------------------------|
+| `LeadQualificationAgent`                   | `LeadScore`             | Scores 1–10, infers industry, picks Priority, gives reason      |
+| `ResearchAgent`                            | `ResearchSummary`       | Synthesizes pre-fetched company + CRM data into a brief         |
+| `OutreachAgent`                            | `OutreachDraft`         | Drafts a <150-word personalized email                           |
+| `CrmUpdateAgent`                           | `CrmUpdateInstructions` | Decides stage + structured notes; workflow executes             |
+| Monitoring/Recovery                        | _cross-cutting_         | Polly retries, traces every attempt, alerts on terminal failure |
 
 ## Tech stack
 
@@ -146,7 +146,9 @@ through all four agents costs well under a US cent.
   no engagement ("low intent").
 - **Workflow runs** — click a run to expand its agent-by-agent trace timeline with
   per-step input, output, duration, and retry count.
-- **Outbox** — generated emails as both DB rows and `.eml` files on disk.
+- **Outbox** — generated emails as both DB rows and `.eml` files on disk. With
+  `Email:Provider=Smtp` the same draft is actually sent (Gmail via app password) and the
+  `.eml` becomes the send audit; the default `File` provider only writes the `.eml`.
 - **Notifications** — the "Slack" feed with info/warn/error entries.
 - **Notes** — per-lead markdown files in `notes/{leadId}.md` (mocks Notion).
 
@@ -164,6 +166,18 @@ through all four agents costs well under a US cent.
     "MockThrowOnAgent": null       // for failure-injection in tests
   },
   "OpenAI": { "ApiKey": "" },      // set via OpenAI__ApiKey env var
+  "Email": {
+    "Provider": "File"             // "File" (.eml mock) | "Smtp" (real send)
+  },
+  "Smtp": {                        // used when Email:Provider = "Smtp"; Gmail-ready defaults
+    "Host": "smtp.gmail.com",
+    "Port": 587,                   // 587 ⇒ STARTTLS; 465 ⇒ set UseStartTls false
+    "UseStartTls": true,
+    "Username": "",                // Gmail address; via Smtp__Username
+    "Password": "",                // Gmail App Password; via Smtp__Password
+    "FromAddress": "",             // defaults to Username
+    "FromName": "AI Sales Ops Assistant"
+  },
   "Workflow": {
     "QualificationThreshold": 5,   // score < threshold ⇒ skip outreach
     "MaxRetries": 3,
@@ -259,7 +273,8 @@ src/MultiAgent.Agents/
 
 src/MultiAgent.Infrastructure/
   Persistence/             AppDbContext, EF migrations, Sqlite* implementations
-  Email/                   FileSystemEmailSender — writes .eml files
+  Email/                   FileSystemEmailSender (.eml mock) + SmtpEmailSender (real SMTP,
+                           Gmail-ready) selected by Email:Provider; ISmtpDispatcher seam
   Notifications/           ConsoleNotificationSink — ILogger + Notifications table
   Notes/                   MarkdownNotesStore — writes per-lead .md files
   Llm/                     IChatClient registration, MockChatClient, MockResponseGenerator

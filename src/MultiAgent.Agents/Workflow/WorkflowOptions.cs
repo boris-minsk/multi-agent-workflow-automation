@@ -16,4 +16,7 @@ public sealed class WorkflowOptions
     /// emails to prospects). Set to <see cref="ApprovalMode.Never"/> for the original auto-send flow.
     /// </summary>
     public ApprovalMode ApprovalMode { get; set; } = ApprovalMode.Always;
+
+    /// <summary>How many runs the background worker processes concurrently.</summary>
+    public int MaxConcurrentRuns { get; set; } = 4;
 }

@@ -17,4 +17,10 @@ public interface IEmailSender
 
     Task<IReadOnlyList<OutboxItem>> ListAsync(int take, CancellationToken ct);
     Task<OutboxItem?> GetAsync(Guid id, CancellationToken ct);
+
+    /// <summary>
+    /// True if an email has already been sent for this run (an outbox row exists). Used by startup
+    /// recovery to decide whether an interrupted run can be safely re-run without a duplicate send.
+    /// </summary>
+    Task<bool> HasSentForRunAsync(Guid runId, CancellationToken ct);
 }

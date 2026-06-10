@@ -66,4 +66,7 @@ public sealed class FileSystemEmailSender(
 
     public async Task<OutboxItem?> GetAsync(Guid id, CancellationToken ct) =>
         await db.OutboxItems.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
+
+    public async Task<bool> HasSentForRunAsync(Guid runId, CancellationToken ct) =>
+        await db.OutboxItems.AsNoTracking().AnyAsync(o => o.RunId == runId, ct);
 }

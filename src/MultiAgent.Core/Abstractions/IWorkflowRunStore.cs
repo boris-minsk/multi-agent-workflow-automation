@@ -33,4 +33,10 @@ public interface IWorkflowRunStore
     Task<WorkflowRun?> GetAsync(Guid runId, CancellationToken ct);
 
     Task<IReadOnlyList<WorkflowRun>> ListAsync(int take, CancellationToken ct);
+
+    /// <summary>
+    /// Runs in a non-terminal state (Pending, Running, AwaitingApproval) — used by startup recovery
+    /// to find work that a previous process left unfinished.
+    /// </summary>
+    Task<IReadOnlyList<WorkflowRun>> ListNonTerminalAsync(CancellationToken ct);
 }

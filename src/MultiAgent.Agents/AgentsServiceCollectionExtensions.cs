@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using MultiAgent.Agents.Agents;
 using MultiAgent.Agents.Runner;
 using MultiAgent.Agents.Workflow;
@@ -45,8 +46,13 @@ public static class AgentsServiceCollectionExtensions
         // Workflow — scoped because it uses scoped repositories (DbContext-backed).
         services.AddScoped<SalesFollowUpWorkflow>();
 
-        // Public workflow entry-point.
+        // Public workflow entry-point + its durable background execution: a Channel-backed queue, a
+        // background worker that drains it, and startup recovery for runs a previous process left
+        // unfinished. (Hosted services don't run in tests, which build the provider without a host.)
         services.AddSingleton<IWorkflowRunner, WorkflowRunner>();
+        services.AddSingleton<WorkflowQueue>();
+        services.AddSingleton<WorkflowRecovery>();
+        services.AddHostedService<WorkflowWorker>();
 
         return services;
     }

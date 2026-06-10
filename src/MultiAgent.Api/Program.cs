@@ -29,6 +29,10 @@ try
             new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
+    // Registration order matters: AddInfrastructure registers DatabaseInitializer (an IHostedService
+    // that applies EF migrations), and AddAgents registers WorkflowWorker (a BackgroundService whose
+    // startup recovery reads the DB). Hosted services start in registration order and each
+    // IHostedService.StartAsync is awaited before the next, so migrations complete before recovery runs.
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddLlm(builder.Configuration);
     builder.Services.AddAgents(builder.Configuration);

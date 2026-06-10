@@ -85,4 +85,13 @@ public sealed class SqliteWorkflowRunStore(AppDbContext db) : IWorkflowRunStore
             .OrderByDescending(r => r.StartedAt)
             .Take(take)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<WorkflowRun>> ListNonTerminalAsync(CancellationToken ct) =>
+        await db.WorkflowRuns
+            .AsNoTracking()
+            .Where(r => r.Status == RunStatus.Pending
+                     || r.Status == RunStatus.Running
+                     || r.Status == RunStatus.AwaitingApproval)
+            .OrderBy(r => r.StartedAt)
+            .ToListAsync(ct);
 }

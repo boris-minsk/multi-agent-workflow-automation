@@ -21,7 +21,7 @@ OAuth setup or per-vendor accounts.
                   │
                   ▼
          ┌────────────────────┐
-         │ WorkflowRunner     │   in-memory background task
+         │ WorkflowRunner     │   enqueues to a durable background worker
          │  + Polly retry     │   tracing decorator wraps every agent call
          │  + AgentTracer     │
          └────────┬───────────┘
@@ -277,8 +277,9 @@ Phase 3 — production-readiness:
 - ✅ **HITL email approval (built)** — a qualifying lead's email pauses for human
   approve/edit/reject before sending; see "Human approval" above. Built as a durable
   pause/resume on the custom runner; `Workflow:ApprovalMode` = Always | HighValueOnly | Never.
-- Durable in-flight run state — swap the in-memory background task for a queue (Channel or
-  external) so a run mid-flight survives a process restart (the approval *pause* already does)
+- ✅ **Durable in-flight runs (built)** — a Channel-backed `WorkflowQueue` + a `WorkflowWorker`
+  background service replace the in-memory `Task.Run`; on startup, recovery re-queues unfinished
+  work and resumes interrupted runs that hadn't sent yet (never double-sending). `Workflow:MaxConcurrentRuns` tunes the worker.
 - Prometheus metrics endpoint, Docker Compose deployment, **API authentication**
 
 ## Repository tour

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,18 +7,17 @@ using MultiAgent.Core.Models;
 namespace MultiAgent.Agents.Workflow;
 
 /// <summary>
-/// Singleton coordinator that records a new <see cref="WorkflowRun"/>, fires off the
-/// <see cref="SalesFollowUpWorkflow"/> on a background task with its own DI scope, and exposes
-/// status queries plus the approve/reject actions for runs paused at AwaitingApproval.
-/// Background tasks are in-memory (not restart-safe); a parked run's state, however, lives in the
-/// run row, so approval survives a restart even though the in-flight task does not.
+/// Coordinator (singleton, <see cref="IWorkflowRunner"/>): records a new <see cref="WorkflowRun"/>
+/// and enqueues it onto <see cref="WorkflowQueue"/> for the background <see cref="WorkflowWorker"/> to
+/// execute, exposes status queries, and handles the human-approval approve/reject actions. Enqueuing
+/// (rather than a fire-and-forget Task.Run) means work is dispatched from one place and survives a
+/// restart via the persisted run rows + <see cref="WorkflowRecovery"/>.
 /// </summary>
 public sealed class WorkflowRunner(
     IServiceScopeFactory scopeFactory,
+    WorkflowQueue queue,
     ILogger<WorkflowRunner> logger) : IWorkflowRunner
 {
-    private readonly ConcurrentDictionary<Guid, Task> _running = new();
-
     public async Task<Guid> StartAsync(Guid leadId, CancellationToken ct)
     {
         Guid runId;
@@ -30,25 +28,7 @@ public sealed class WorkflowRunner(
             runId = run.Id;
         }
 
-        var task = Task.Run(async () =>
-        {
-            try
-            {
-                using var innerScope = scopeFactory.CreateScope();
-                var workflow = innerScope.ServiceProvider.GetRequiredService<SalesFollowUpWorkflow>();
-                await workflow.RunAsync(runId, leadId, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Background workflow task threw outside its own handler for run {RunId}.", runId);
-            }
-            finally
-            {
-                _running.TryRemove(runId, out _);
-            }
-        }, CancellationToken.None);
-
-        _running[runId] = task;
+        queue.Enqueue(new WorkItem(runId, leadId, WorkItemKind.Start));
         return runId;
     }
 
@@ -104,7 +84,7 @@ public sealed class WorkflowRunner(
             }
         }
 
-        FireResume(runId, leadId);
+        queue.Enqueue(new WorkItem(runId, leadId, WorkItemKind.Resume));
         return true;
     }
 
@@ -119,7 +99,7 @@ public sealed class WorkflowRunner(
         }
 
         // Atomic guard, then record the rejection. Reject is fast + deterministic (no agent call),
-        // so it runs inline rather than on a background task.
+        // so it runs inline rather than on the background worker.
         if (!await runStore.TryTransitionAsync(runId, RunStatus.AwaitingApproval, RunStatus.Rejected, ct))
         {
             return false;
@@ -137,44 +117,5 @@ public sealed class WorkflowRunner(
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Runs Part B on a background task after an approval. The status was already moved to Running by
-    /// <see cref="ApproveAsync"/>, so if the task cannot even start (scope/DI failure) this catch
-    /// marks the run Failed — otherwise it would be stuck in Running with no live task to recover it.
-    /// (ResumeAfterApprovalAsync self-handles failures that happen once the workflow is running.)
-    /// </summary>
-    private void FireResume(Guid runId, Guid leadId)
-    {
-        var task = Task.Run(async () =>
-        {
-            try
-            {
-                using var scope = scopeFactory.CreateScope();
-                var workflow = scope.ServiceProvider.GetRequiredService<SalesFollowUpWorkflow>();
-                await workflow.ResumeAfterApprovalAsync(runId, leadId, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Resume task for run {RunId} threw before/around the workflow handler.", runId);
-                try
-                {
-                    using var scope = scopeFactory.CreateScope();
-                    var runStore = scope.ServiceProvider.GetRequiredService<IWorkflowRunStore>();
-                    await runStore.SetStatusAsync(runId, RunStatus.Failed, ex.Message, null, null, CancellationToken.None);
-                }
-                catch (Exception inner)
-                {
-                    logger.LogError(inner, "Also failed to mark resumed run {RunId} as Failed.", runId);
-                }
-            }
-            finally
-            {
-                _running.TryRemove(runId, out _);
-            }
-        }, CancellationToken.None);
-
-        _running[runId] = task;
     }
 }

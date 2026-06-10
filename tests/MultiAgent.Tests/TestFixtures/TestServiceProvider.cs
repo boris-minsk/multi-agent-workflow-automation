@@ -34,7 +34,10 @@ public sealed class TestServiceProvider : IAsyncDisposable
             ["Paths:SeedResearchFile"] = Path.Combine(TempDir, "no-research.json"),
             ["Workflow:QualificationThreshold"] = "5",
             ["Workflow:MaxRetries"] = "2",
-            ["Workflow:RetryBaseDelayMs"] = "10"
+            ["Workflow:RetryBaseDelayMs"] = "10",
+            // HITL (Human-In-The-Loop) approval is OFF by default in tests so the existing suite is unaffected; the
+            // approval tests opt in via the configOverride below.
+            ["Workflow:ApprovalMode"] = "Never"
         };
         configOverride?.Invoke(configValues);
 

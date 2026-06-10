@@ -13,4 +13,11 @@ public sealed class WorkflowRun
     public string? ErrorMessage { get; set; }
     public string? FinalScoreJson { get; set; }
     public string? FinalDraftJson { get; set; }
+
+    /// <summary>
+    /// Scratch state for a run parked at <see cref="RunStatus.AwaitingApproval"/>: the score,
+    /// research, and the draft proposed for sending, as JSON. Distinct from the Final* fields,
+    /// which record what was actually sent once the run completes.
+    /// </summary>
+    public string? PendingStateJson { get; set; }
 }

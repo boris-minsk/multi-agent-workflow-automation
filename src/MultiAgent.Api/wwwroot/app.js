@@ -107,6 +107,16 @@ async function loadRuns() {
   $$('.run').forEach((el) => {
     el.addEventListener('click', () => toggleRun(el.dataset.runId));
   });
+  // Approval controls live inside the run card — stop clicks from toggling/collapsing it.
+  $$('.approval-panel').forEach((p) => p.addEventListener('click', (e) => e.stopPropagation()));
+  $$('.approve-btn').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    approveRun(b.dataset.runId);
+  }));
+  $$('.reject-btn').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    rejectRun(b.dataset.runId);
+  }));
 
   const anyActive = State.runs.some((r) => r.status === 'Pending' || r.status === 'Running');
   if (anyActive) startPolling(); else stopPolling();
@@ -123,8 +133,30 @@ function renderRun(r) {
         <span class="run-status ${status.toLowerCase()}">${status}</span>
       </div>
       <div class="run-time muted">${timeAgo(r.startedAt)} · run ${r.id.slice(0, 8)}</div>
+      ${r.status === 'AwaitingApproval' ? renderApprovalPanel(r) : ''}
       <div class="run-traces" id="traces-${r.id}">
         <div class="empty">loading…</div>
+      </div>
+    </div>`;
+}
+
+// Inline approve/edit/reject panel, shown on a run paused at AwaitingApproval.
+function renderApprovalPanel(r) {
+  let draft = {};
+  try {
+    const pending = JSON.parse(r.pendingStateJson || '{}');
+    draft = pending.Draft || pending.draft || {};
+  } catch { /* leave draft empty */ }
+  const subject = draft.Subject ?? draft.subject ?? '';
+  const body = draft.Body ?? draft.body ?? '';
+  return `
+    <div class="approval-panel" data-run-id="${r.id}">
+      <div class="approval-label">Email awaiting approval — edit before sending if needed</div>
+      <input id="approve-subject-${r.id}" value="${escapeHtml(subject)}" />
+      <textarea id="approve-body-${r.id}">${escapeHtml(body)}</textarea>
+      <div class="approval-actions">
+        <button class="approve-btn" data-run-id="${r.id}">Approve &amp; send</button>
+        <button class="reject-btn" data-run-id="${r.id}">Reject</button>
       </div>
     </div>`;
 }
@@ -161,6 +193,37 @@ async function loadTraces(runId) {
       </div>`).join('');
   } catch (e) {
     console.error('loadTraces failed', e);
+  }
+}
+
+async function approveRun(runId) {
+  const subject = document.getElementById(`approve-subject-${runId}`)?.value;
+  const body = document.getElementById(`approve-body-${runId}`)?.value;
+  try {
+    await api(`/api/runs/${runId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, body })
+    });
+    startPolling();
+    refreshAll();
+  } catch (e) {
+    alert('Approve failed: ' + e.message);
+  }
+}
+
+async function rejectRun(runId) {
+  const reason = prompt('Reason for rejecting this email? (optional)');
+  if (reason === null) return; // cancelled
+  try {
+    await api(`/api/runs/${runId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    refreshAll();
+  } catch (e) {
+    alert('Reject failed: ' + e.message);
   }
 }
 

@@ -152,6 +152,29 @@ through all four agents costs well under a US cent.
 - **Notifications** — the "Slack" feed with info/warn/error entries.
 - **Notes** — per-lead markdown files in `notes/{leadId}.md` (mocks Notion).
 
+### Human approval (HITL)
+
+By default a qualifying lead's outreach email is **held for human approval** before it is
+sent — a real system does not auto-send AI-written emails to prospects. When a run reaches
+the send step it pauses with status **AwaitingApproval** and shows an inline panel in the
+Workflow runs column: edit the subject/body if you want, then **Approve & send** or
+**Reject**. Approve resumes the run (send → CRM update → Completed); reject ends it as
+**Rejected** with no email and a CRM note (the lead stays qualified — only this email was
+declined).
+
+`Workflow:ApprovalMode` controls when the gate applies:
+
+| Mode | Behavior |
+|---|---|
+| `Always` (default) | Every qualifying lead waits for approval |
+| `HighValueOnly` | Only High-priority or score ≥ 8 leads wait; routine leads auto-send |
+| `Never` | No gate — send automatically (the original behavior) |
+
+It works in mock mode too (approving is a human click, not an LLM call), and the pause
+state is stored on the run row, so an approval survives an app restart. Endpoints:
+`POST /api/runs/{id}/approve` (optional `{ subject, body }`) and
+`POST /api/runs/{id}/reject` (optional `{ reason }`).
+
 ### Configuration
 
 `src/MultiAgent.Api/appsettings.json` (env-var overrides via `__`):
@@ -181,7 +204,8 @@ through all four agents costs well under a US cent.
   "Workflow": {
     "QualificationThreshold": 5,   // score < threshold ⇒ skip outreach
     "MaxRetries": 3,
-    "RetryBaseDelayMs": 500
+    "RetryBaseDelayMs": 500,
+    "ApprovalMode": "Always"       // "Always" | "HighValueOnly" | "Never" — human email approval
   },
   "Paths": {
     "OutboxDirectory": "outbox",
@@ -204,6 +228,8 @@ runtime files live next to the binary, regardless of how you launch the app.
 | `POST` | `/api/leads/{id}/run` | start workflow; returns `{ runId }` (202 Accepted) |
 | `GET` | `/api/runs?take=20` | list recent runs |
 | `GET` | `/api/runs/{id}` | run + full agent trace |
+| `POST` | `/api/runs/{id}/approve` | approve a run awaiting approval (optional `{ subject, body }` edit); resumes the send. 409 if not awaiting |
+| `POST` | `/api/runs/{id}/reject` | reject a run awaiting approval (optional `{ reason }`); no email sent |
 | `GET` | `/api/outbox?take=20` | generated emails (subject + body) |
 | `GET` | `/api/outbox/{id}` | single email |
 | `GET` | `/api/notifications?take=50` | "Slack" feed |
@@ -221,8 +247,11 @@ but you'd plan to migrate; starting on Agent Framework avoids that.
 pipeline needs conditional skip (low score → no outreach), per-agent retry, and
 per-step tracing. A custom runner with explicit C# control flow is clearer for those
 than fighting a graph builder. `BuildSequential` (and the richer `WorkflowBuilder`)
-remain swappable — and `BuildSequential` is the natural home for Phase 3's HITL
-approval via `ApprovalRequiredAIFunction`.
+remain swappable. Phase 3's HITL email approval was therefore built **on the custom
+runner** as a durable pause/resume (state saved on the run row) rather than on the native
+`ApprovalRequiredAIFunction` flow — the native path gates a *tool call* (the email send
+isn't a tool here), needs a live event-stream reader + checkpoint storage, is OpenAI-only,
+and would drop the conditional skip + per-step tracing. See "Human approval" above.
 
 **Why no tool calling in Phase 1.** The agents are pure functions (input → structured
 output). The workflow owns I/O — fetching company info, sending emails, updating CRM,
@@ -245,13 +274,12 @@ Phase 2 — one real integration:
   Desktop / Cursor can use the same tools
 
 Phase 3 — production-readiness:
-- HITL approval: wrap the email-send tool with `ApprovalRequiredAIFunction` and switch
-  to `AgentWorkflowBuilder.BuildSequential`. The workflow auto-pauses on the wrapped
-  tool, emits `RequestInfoEvent`; UI surfaces approve/edit/reject and resumes via
-  `run.SendResponseAsync`
-- Durable workflow state — swap in-memory background tasks for a queue (Channel or
-  external) so runs survive process restart
-- Prometheus metrics endpoint, Docker Compose deployment, API authentication
+- ✅ **HITL email approval (built)** — a qualifying lead's email pauses for human
+  approve/edit/reject before sending; see "Human approval" above. Built as a durable
+  pause/resume on the custom runner; `Workflow:ApprovalMode` = Always | HighValueOnly | Never.
+- Durable in-flight run state — swap the in-memory background task for a queue (Channel or
+  external) so a run mid-flight survives a process restart (the approval *pause* already does)
+- Prometheus metrics endpoint, Docker Compose deployment, **API authentication**
 
 ## Repository tour
 

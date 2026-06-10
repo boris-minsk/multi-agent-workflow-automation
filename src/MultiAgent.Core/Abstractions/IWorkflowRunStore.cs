@@ -17,6 +17,19 @@ public interface IWorkflowRunStore
         string? finalDraftJson,
         CancellationToken ct);
 
+    /// <summary>
+    /// Atomically move a run from one status to another. Returns true only if the row was in
+    /// <paramref name="from"/> and was updated — this is the guard against a double-approve or two
+    /// concurrent transitions. Stamps <c>CompletedAt</c> when <paramref name="to"/> is terminal.
+    /// </summary>
+    Task<bool> TryTransitionAsync(Guid runId, RunStatus from, RunStatus to, CancellationToken ct);
+
+    /// <summary>Park a run for human approval: set status to AwaitingApproval and save the resume state.</summary>
+    Task SetAwaitingApprovalAsync(Guid runId, string pendingStateJson, CancellationToken ct);
+
+    /// <summary>Replace the saved approval state — used when a reviewer edits the draft before approving.</summary>
+    Task UpdatePendingStateAsync(Guid runId, string pendingStateJson, CancellationToken ct);
+
     Task<WorkflowRun?> GetAsync(Guid runId, CancellationToken ct);
 
     Task<IReadOnlyList<WorkflowRun>> ListAsync(int take, CancellationToken ct);
